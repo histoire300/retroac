@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rétroaction sur mes réponses en histoire</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- 
+    CONFIGURATION GOOGLE SHEETS - ÉTAPES IMPORTANTES :
+    
+    1. Votre Google Sheets doit avoir ces onglets :
+       - "Eleves" avec colonnes : nom | classe | motDePasse
+       - "Evaluations" avec colonnes : nom | type | questions | date  
+       - "Donnees" avec colonnes : nom | classe | evaluation | date | qualite_vsc | qualite_hors_sujet | qualite_faux | qualite_incomplet | ensuite_analyse | ensuite_lecture | ensuite_redaction | ensuite_memoire
+    
+    2. Partage : "Tous les utilisateurs ayant le lien" en mode "Éditeur"
+    
+    3. ID configuré : 1koJCO9Mpr1ORy4lVX_4eaXkuVP1vEgQmaCor-_Is0WI
+    
+    4. Pour l'écriture complète, créez un Google Apps Script Web App (instructions dans le JavaScript ci-dessous)
+    -->
     <style>
         * {
             margin: 0;
@@ -297,6 +311,11 @@
             <div class="header">
                 <h1>Rétroaction sur mes réponses en histoire</h1>
                 <p>Secondaire 3 - Histoire du Québec</p>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid rgba(208,13,43,1);">
+                    <strong>📝 Format du mot de passe :</strong><br>
+                    <span style="color: rgba(7,45,110,1);">Nom de famille + Première lettre du prénom</span><br>
+                    <em style="color: #6c757d; font-size: 0.9em;">Exemple : Lemire Alain = LemireA</em>
+                </div>
             </div>
             
             <div class="main-buttons">
@@ -489,107 +508,231 @@
     </div>
 
     <script>
-        // Configuration Google Sheets (à remplacer par votre ID de feuille)
-        const SHEET_ID = 'VOTRE_ID_GOOGLE_SHEETS';
-        const API_KEY = 'VOTRE_CLE_API';
+        // Configuration Google Sheets
+        const SHEET_ID = '1koJCO9Mpr1ORy4lVX_4eaXkuVP1vEgQmaCor-_Is0WI';
+        const SHEETS_BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?`;
         
-        // Données des élèves (extraites du fichier Excel)
+        // Données des élèves (nouvelles données d'identification)
         const studentsData = [
-            {nom: "Audet Kloé", classe: 301, motDePasse: "*AUDK84601000"},
-            {nom: "Barrière Ann-Élie", classe: 301, motDePasse: "*BARA66591101"},
-            {nom: "Bilodeau Léa", classe: 301, motDePasse: "*BILL69531109"},
-            {nom: "Bolduc Hayden", classe: 301, motDePasse: "*BOLH74071108"},
-            {nom: "Chouinard Laurie", classe: 301, motDePasse: "*CHOL76541108"},
-            {nom: "Croteau Éléonore", classe: 301, motDePasse: "*CROE84621006"},
-            {nom: "Cusson Élodie", classe: 301, motDePasse: "*CUSE79551109"},
-            {nom: "Delisle Daphnée", classe: 301, motDePasse: "*DELD89581108"},
-            {nom: "Drouin Cyr Edouard", classe: 301, motDePasse: "*DROE75081108"},
-            {nom: "Giguère Jérémy", classe: 301, motDePasse: "*GIGJ89531005"},
-            {nom: "Giroux Anthony", classe: 301, motDePasse: "*GIRA87571000"},
-            {nom: "Harvey Catherine", classe: 301, motDePasse: "*HARC73051105"},
-            {nom: "Lafleur Jade", classe: 301, motDePasse: "*LAFJ86591109"},
-            {nom: "Lagrange Émilia", classe: 301, motDePasse: "*LAGE87531009"},
-            {nom: "Landry Gabriel", classe: 301, motDePasse: "*LANG76091009"},
-            {nom: "Masson Édouard", classe: 301, motDePasse: "*MASE87071008"},
-            {nom: "Morency Catherine", classe: 301, motDePasse: "*MORC69051005"},
-            {nom: "Paradis Tristan", classe: 301, motDePasse: "*PART74081100"},
-            {nom: "Pelletier Kamylle", classe: 301, motDePasse: "*PELK86591001"},
-            {nom: "Picard Nicolas", classe: 301, motDePasse: "*PICN75051108"},
-            {nom: "Raymond Laurie", classe: 301, motDePasse: "*RAYL78011101"},
-            {nom: "Rondeau Édouard", classe: 301, motDePasse: "*RONE84051106"},
-            {nom: "Therrien Laurie", classe: 301, motDePasse: "*THEL75091009"},
-            {nom: "Vézina Sarah", classe: 301, motDePasse: "*VEZS84641008"},
-            {nom: "Audy Cédric", classe: 302, motDePasse: "*AUDC83091105"},
-            {nom: "Beauséjour Maude", classe: 302, motDePasse: "*BEAM68571108"},
-            {nom: "Bélisle Florence", classe: 302, motDePasse: "*BELF78591100"},
-            {nom: "Bernier Claudia", classe: 302, motDePasse: "*BERC86531009"},
-            {nom: "Bouchard Jérémy", classe: 302, motDePasse: "*BOUJ86051105"},
-            {nom: "Bouchard-Moisan Laurent", classe: 302, motDePasse: "*BOUL75081108"},
-            {nom: "Brouillette Gabrielle", classe: 302, motDePasse: "*BROG84521008"},
-            {nom: "Duchesne Julie", classe: 302, motDePasse: "*DUCJ75511101"},
-            {nom: "Fournier Océane", classe: 302, motDePasse: "*FOUO84581100"},
-            {nom: "Giroux Coralie", classe: 302, motDePasse: "*GIRC83531000"},
-            {nom: "Guindon Amélie", classe: 302, motDePasse: "*GUIA89521101"},
-            {nom: "Hébert Catherine", classe: 302, motDePasse: "*HEBC84531109"},
-            {nom: "Lacroix Xavier", classe: 302, motDePasse: "*LACX76071005"},
-            {nom: "Laflamme Xavier", classe: 302, motDePasse: "*LAFX84571006"},
-            {nom: "Laliberté Ève", classe: 302, motDePasse: "*LALE86511001"},
-            {nom: "Leduc Anthony", classe: 302, motDePasse: "*LEDA83071108"},
-            {nom: "Lemay Gabriel", classe: 302, motDePasse: "*LEMG86071009"},
-            {nom: "Martel Antoine", classe: 302, motDePasse: "*MARA73081000"},
-            {nom: "Mercier Nathan", classe: 302, motDePasse: "*MERN78041005"},
-            {nom: "Moreau William", classe: 302, motDePasse: "*MOREW87571000"},
-            {nom: "Noreau Alicia", classe: 302, motDePasse: "*NORA86591105"},
-            {nom: "Pelletier Vanessa", classe: 302, motDePasse: "*PELV75521000"},
-            {nom: "Plante Étienne", classe: 302, motDePasse: "*PLAE89581108"},
-            {nom: "Rodrigue Lucas", classe: 302, motDePasse: "*RODL76041101"},
-            {nom: "Roy Loïc", classe: 302, motDePasse: "*ROYL75011009"},
-            {nom: "Ruest Félix", classe: 302, motDePasse: "*RUEF84091005"},
-            {nom: "Thériault Sandrine", classe: 302, motDePasse: "*THES87521101"},
-            {nom: "Thibault Gabriel", classe: 302, motDePasse: "*THIG76591109"},
-            {nom: "Tremblay Charles", classe: 302, motDePasse: "*TREC74051008"},
-            {nom: "Tremblay Samuel", classe: 302, motDePasse: "*TRES84611008"},
-            {nom: "Alvarez Kayla", classe: 303, motDePasse: "*ALVK72531101"},
-            {nom: "Beaudoin Théodore", classe: 303, motDePasse: "*BEAT73011108"},
-            {nom: "Bellemare Léa-Jade", classe: 303, motDePasse: "*BELL89591106"},
-            {nom: "Bernier Maddyson", classe: 303, motDePasse: "*BERM78521105"},
-            {nom: "Bouchard Lydia", classe: 303, motDePasse: "*BOUL86531001"},
-            {nom: "Bourassa Loïc", classe: 303, motDePasse: "*BOUL87571001"},
-            {nom: "Cantin David", classe: 303, motDePasse: "*CAND87051001"},
-            {nom: "Caouette Emma", classe: 303, motDePasse: "*CAOE83531008"},
-            {nom: "Chénard Mya", classe: 303, motDePasse: "*CHEM73541108"},
-            {nom: "Chouinard Rosalie", classe: 303, motDePasse: "*CHOR75531105"},
-            {nom: "Desjardins Livia", classe: 303, motDePasse: "*DESL89591100"},
-            {nom: "Doyon Chloé", classe: 303, motDePasse: "*DOYC78531105"},
-            {nom: "Drouin Anthony", classe: 303, motDePasse: "*DROA69081101"},
-            {nom: "Fréchette Kyllian", classe: 303, motDePasse: "*FREK83521101"},
-            {nom: "Gonthier Naomy", classe: 303, motDePasse: "*GONN69571000"},
-            {nom: "Laberge Naomie", classe: 303, motDePasse: "*LABN89571106"},
-            {nom: "Lafleur Noémie", classe: 303, motDePasse: "*LAFN84521000"},
-            {nom: "Laliberté Catherine", classe: 303, motDePasse: "*LALC87561100"},
-            {nom: "Lecours Rebecca", classe: 303, motDePasse: "*LECR78561105"},
-            {nom: "Lemay Katelle", classe: 303, motDePasse: "*LEMK86531100"},
-            {nom: "Marquis Nathan", classe: 303, motDePasse: "*MARN84581001"},
-            {nom: "Martin Gabrielle", classe: 303, motDePasse: "*MARG75521001"},
-            {nom: "Mercier Mia", classe: 303, motDePasse: "*MERM78541101"},
-            {nom: "Moisan Ariane", classe: 303, motDePasse: "*MOIA84521008"},
-            {nom: "Naud Lorine", classe: 303, motDePasse: "*NAUL76551006"},
-            {nom: "Noiseux Catherine", classe: 303, motDePasse: "*NOIC85581008"},
-            {nom: "Ouellet Emmy", classe: 303, motDePasse: "*OUEE85551105"},
-            {nom: "Pellerin Arnaud", classe: 303, motDePasse: "*PELA87531000"},
-            {nom: "Pilote Julien", classe: 303, motDePasse: "*PILJ73051008"},
-            {nom: "Poulin Emma", classe: 303, motDePasse: "*POUE73081101"},
-            {nom: "Rioux Anthony", classe: 303, motDePasse: "*RIOA73511009"},
-            {nom: "Tardif Elisabeth", classe: 303, motDePasse: "*TARE76531100"},
-            {nom: "Thériault Julia", classe: 303, motDePasse: "*THEJ83541005"},
-            {nom: "Toupin Laurie", classe: 303, motDePasse: "*TOUL78561009"},
-            {nom: "Tremblay Victoria", classe: 303, motDePasse: "*TREV89511101"}
+            {nom: "AudetK", classe: 301, motDePasse: "AudetK"},
+            {nom: "BarrièreA", classe: 301, motDePasse: "BarrièreA"},
+            {nom: "BilodeauL", classe: 301, motDePasse: "BilodeauL"},
+            {nom: "BolducH", classe: 301, motDePasse: "BolducH"},
+            {nom: "ChouinardL", classe: 301, motDePasse: "ChouinardL"},
+            {nom: "CroteauÉ", classe: 301, motDePasse: "CroteauÉ"},
+            {nom: "CussonÉ", classe: 301, motDePasse: "CussonÉ"},
+            {nom: "DelisleD", classe: 301, motDePasse: "DelisleD"},
+            {nom: "DrouinC", classe: 301, motDePasse: "DrouinC"},
+            {nom: "DuchesneauJ", classe: 301, motDePasse: "DuchesneauJ"},
+            {nom: "DuplessisC", classe: 301, motDePasse: "DuplessisC"},
+            {nom: "Faucher-PattersonH", classe: 301, motDePasse: "Faucher-PattersonH"},
+            {nom: "FontaineC", classe: 301, motDePasse: "FontaineC"},
+            {nom: "Gagnon-RivardM", classe: 301, motDePasse: "Gagnon-RivardM"},
+            {nom: "GrenierL", classe: 301, motDePasse: "GrenierL"},
+            {nom: "GrondinÉ", classe: 301, motDePasse: "GrondinÉ"},
+            {nom: "LamoureuxS", classe: 301, motDePasse: "LamoureuxS"},
+            {nom: "LéveilléeM", classe: 301, motDePasse: "LéveilléeM"},
+            {nom: "MorinM", classe: 301, motDePasse: "MorinM"},
+            {nom: "RicherT", classe: 301, motDePasse: "RicherT"},
+            {nom: "SantosF", classe: 301, motDePasse: "SantosF"},
+            {nom: "VennerM", classe: 301, motDePasse: "VennerM"},
+            {nom: "VigneuxP", classe: 301, motDePasse: "VigneuxP"},
+            {nom: "VincentL", classe: 301, motDePasse: "VincentL"},
+            {nom: "AudyC", classe: 302, motDePasse: "AudyC"},
+            {nom: "BeauséjourM", classe: 302, motDePasse: "BeauséjourM"},
+            {nom: "BélisleF", classe: 302, motDePasse: "BélisleF"},
+            {nom: "BélisleX", classe: 302, motDePasse: "BélisleX"},
+            {nom: "BlanchetteG", classe: 302, motDePasse: "BlanchetteG"},
+            {nom: "BoulangerD", classe: 302, motDePasse: "BoulangerD"},
+            {nom: "CampeauA", classe: 302, motDePasse: "CampeauA"},
+            {nom: "CastonguayM", classe: 302, motDePasse: "CastonguayM"},
+            {nom: "CoutureO", classe: 302, motDePasse: "CoutureO"},
+            {nom: "FontaineM", classe: 302, motDePasse: "FontaineM"},
+            {nom: "GamacheK", classe: 302, motDePasse: "GamacheK"},
+            {nom: "GrondinC", classe: 302, motDePasse: "GrondinC"},
+            {nom: "GuimontZ", classe: 302, motDePasse: "GuimontZ"},
+            {nom: "LacasseÉ", classe: 302, motDePasse: "LacasseÉ"},
+            {nom: "LaflammeZ", classe: 302, motDePasse: "LaflammeZ"},
+            {nom: "LemieuxÈ", classe: 302, motDePasse: "LemieuxÈ"},
+            {nom: "MalenfantW", classe: 302, motDePasse: "MalenfantW"},
+            {nom: "McVeighK", classe: 302, motDePasse: "McVeighK"},
+            {nom: "MénardT", classe: 302, motDePasse: "MénardT"},
+            {nom: "NadeauA", classe: 302, motDePasse: "NadeauA"},
+            {nom: "NadeauÉ", classe: 302, motDePasse: "NadeauÉ"},
+            {nom: "NadeauF", classe: 302, motDePasse: "NadeauF"},
+            {nom: "NaultO", classe: 302, motDePasse: "NaultO"},
+            {nom: "PaquetteJ", classe: 302, motDePasse: "PaquetteJ"},
+            {nom: "PednaultW", classe: 302, motDePasse: "PednaultW"},
+            {nom: "RaymondA", classe: 302, motDePasse: "RaymondA"},
+            {nom: "RoyO", classe: 302, motDePasse: "RoyO"},
+            {nom: "SimardW", classe: 302, motDePasse: "SimardW"},
+            {nom: "SpoonerR", classe: 302, motDePasse: "SpoonerR"},
+            {nom: "TarantoJ", classe: 302, motDePasse: "TarantoJ"},
+            {nom: "AlvarezK", classe: 303, motDePasse: "AlvarezK"},
+            {nom: "BeaudoinT", classe: 303, motDePasse: "BeaudoinT"},
+            {nom: "BellemareL", classe: 303, motDePasse: "BellemareL"},
+            {nom: "BelleroseL", classe: 303, motDePasse: "BelleroseL"},
+            {nom: "BergeronM", classe: 303, motDePasse: "BergeronM"},
+            {nom: "BouxC", classe: 303, motDePasse: "BouxC"},
+            {nom: "Brochu-CaronM", classe: 303, motDePasse: "Brochu-CaronM"},
+            {nom: "CloutierM", classe: 303, motDePasse: "CloutierM"},
+            {nom: "CourchesneC", classe: 303, motDePasse: "CourchesneC"},
+            {nom: "D'Aragon-GagnéA", classe: 303, motDePasse: "D'Aragon-GagnéA"},
+            {nom: "DionC", classe: 303, motDePasse: "DionC"},
+            {nom: "DionM", classe: 303, motDePasse: "DionM"},
+            {nom: "DufourJ", classe: 303, motDePasse: "DufourJ"},
+            {nom: "FecteauV", classe: 303, motDePasse: "FecteauV"},
+            {nom: "FigueroaM", classe: 303, motDePasse: "FigueroaM"},
+            {nom: "FournierK", classe: 303, motDePasse: "FournierK"},
+            {nom: "GagnéÉ", classe: 303, motDePasse: "GagnéÉ"},
+            {nom: "GagnonÉ", classe: 303, motDePasse: "GagnonÉ"},
+            {nom: "GosselinA", classe: 303, motDePasse: "GosselinA"},
+            {nom: "GrenierM", classe: 303, motDePasse: "GrenierM"},
+            {nom: "HouldB", classe: 303, motDePasse: "HouldB"},
+            {nom: "LaporteC", classe: 303, motDePasse: "LaporteC"},
+            {nom: "MorinL", classe: 303, motDePasse: "MorinL"},
+            {nom: "ParadisC", classe: 303, motDePasse: "ParadisC"},
+            {nom: "PépinL", classe: 303, motDePasse: "PépinL"},
+            {nom: "PerreaultR", classe: 303, motDePasse: "PerreaultR"},
+            {nom: "QuinlanB", classe: 303, motDePasse: "QuinlanB"},
+            {nom: "Roy-LefebvreT", classe: 303, motDePasse: "Roy-LefebvreT"},
+            {nom: "TambaK", classe: 303, motDePasse: "TambaK"},
+            {nom: "TherrianA", classe: 303, motDePasse: "TherrianA"},
+            {nom: "ThibodeauU", classe: 303, motDePasse: "ThibodeauU"},
+            {nom: "TrottierT", classe: 303, motDePasse: "TrottierT"},
+            {nom: "TurcotteC", classe: 303, motDePasse: "TurcotteC"},
+            {nom: "VeilleuxJ", classe: 303, motDePasse: "VeilleuxJ"}
         ];
 
         // Variables globales
         let currentStudent = null;
         let evaluations = [];
         let studentData = [];
+        
+        // Fonctions Google Sheets
+        async function readFromSheet(sheetName, range = '') {
+            try {
+                const query = range ? `SELECT * WHERE A IS NOT NULL` : `SELECT *`;
+                const url = `${SHEETS_BASE_URL}sheet=${sheetName}&tq=${encodeURIComponent(query)}&tqx=out:json`;
+                
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                // Parse de la réponse Google Visualization API
+                const json = JSON.parse(text.substring(47).slice(0, -2));
+                
+                if (json.table && json.table.rows) {
+                    return json.table.rows.map(row => 
+                        row.c.map(cell => cell ? cell.v : '')
+                    );
+                }
+                return [];
+            } catch (error) {
+                console.error('Erreur lecture Google Sheets:', error);
+                return [];
+            }
+        }
+        
+        async function writeToSheet(data) {
+            try {
+                // IMPORTANT: Pour que l'écriture fonctionne, vous devez créer un Google Apps Script Web App
+                // Instructions complètes ci-dessous dans les commentaires
+                
+                // Pour l'instant, utilisation du fallback localStorage
+                // Une fois le Google Apps Script configuré, remplacez l'URL ci-dessous
+                const WEBAPP_URL = `https://script.google.com/macros/s/YOUR_WEBAPP_ID/exec`; // À configurer
+                
+                /*
+                // Code à utiliser une fois le Web App configuré :
+                const response = await fetch(WEBAPP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                return response.ok;
+                */
+                
+                // Fallback temporaire vers localStorage
+                return saveToLocalStorage(data);
+            } catch (error) {
+                console.error('Erreur écriture Google Sheets:', error);
+                return saveToLocalStorage(data);
+            }
+        }
+        
+        function saveToLocalStorage(data) {
+            try {
+                if (data.type === 'student_data') {
+                    let allData = JSON.parse(localStorage.getItem('studentData') || '[]');
+                    allData = allData.filter(d => !(d.nom === data.nom && d.evaluation === data.evaluation));
+                    allData.push(data);
+                    localStorage.setItem('studentData', JSON.stringify(allData));
+                } else if (data.type === 'evaluation') {
+                    let evaluations = JSON.parse(localStorage.getItem('evaluations') || '[]');
+                    evaluations.push(data);
+                    localStorage.setItem('evaluations', JSON.stringify(evaluations));
+                }
+                return true;
+            } catch (error) {
+                console.error('Erreur localStorage:', error);
+                return false;
+            }
+        }
+        
+        async function loadEvaluationsFromSheet() {
+            try {
+                const data = await readFromSheet('Evaluations');
+                if (data.length > 1) { // Skip header row
+                    evaluations = data.slice(1).map(row => ({
+                        name: row[0],
+                        type: row[1], 
+                        questions: parseInt(row[2]),
+                        date: row[3]
+                    })).filter(eval => eval.name); // Filter out empty rows
+                } else {
+                    // Fallback to localStorage
+                    evaluations = JSON.parse(localStorage.getItem('evaluations') || '[]');
+                }
+            } catch (error) {
+                console.error('Erreur chargement évaluations:', error);
+                evaluations = JSON.parse(localStorage.getItem('evaluations') || '[]');
+            }
+        }
+        
+        async function loadStudentDataFromSheet() {
+            try {
+                const data = await readFromSheet('Donnees');
+                if (data.length > 1) { // Skip header row
+                    studentData = data.slice(1).map(row => ({
+                        nom: row[0],
+                        classe: parseInt(row[1]),
+                        evaluation: row[2],
+                        date: row[3],
+                        qualite: {
+                            vsc: parseInt(row[4]) || 0,
+                            horsSujet: parseInt(row[5]) || 0,
+                            faux: parseInt(row[6]) || 0,
+                            incomplet: parseInt(row[7]) || 0
+                        },
+                        ensuite: {
+                            analyse: parseInt(row[8]) || 0,
+                            lecture: parseInt(row[9]) || 0,
+                            redaction: parseInt(row[10]) || 0,
+                            memoire: parseInt(row[11]) || 0
+                        }
+                    })).filter(data => data.nom); // Filter out empty rows
+                } else {
+                    // Fallback to localStorage
+                    studentData = JSON.parse(localStorage.getItem('studentData') || '[]');
+                }
+            } catch (error) {
+                console.error('Erreur chargement données élèves:', error);
+                studentData = JSON.parse(localStorage.getItem('studentData') || '[]');
+            }
+        }
 
         // Couleurs de l'école
         const schoolColors = {
@@ -672,13 +815,14 @@
         }
 
         // Charger les évaluations
-        function loadEvaluations() {
+        async function loadEvaluations() {
             const select = document.getElementById('evaluation-select');
-            select.innerHTML = '<option value="">Sélectionner une évaluation</option>';
+            select.innerHTML = '<option value="">Chargement des évaluations...</option>';
             
-            // Charger depuis localStorage (simulation)
-            const storedEvals = JSON.parse(localStorage.getItem('evaluations') || '[]');
-            evaluations = storedEvals;
+            // Charger depuis Google Sheets
+            await loadEvaluationsFromSheet();
+            
+            select.innerHTML = '<option value="">Sélectionner une évaluation</option>';
             
             evaluations.forEach(eval => {
                 const option = document.createElement('option');
@@ -712,7 +856,7 @@
         });
 
         // Sauvegarder les données de l'élève
-        function saveStudentData() {
+        async function saveStudentData() {
             const messageDiv = document.getElementById('form-message');
             const evaluationName = document.getElementById('evaluation-select').value;
             
@@ -722,6 +866,7 @@
             }
             
             const data = {
+                type: 'student_data',
                 nom: currentStudent.nom,
                 classe: currentStudent.classe,
                 evaluation: evaluationName,
@@ -740,20 +885,18 @@
                 }
             };
             
-            // Sauvegarder dans localStorage (simulation)
-            let allData = JSON.parse(localStorage.getItem('studentData') || '[]');
+            messageDiv.innerHTML = '<div class="message">Sauvegarde en cours...</div>';
             
-            // Supprimer les données existantes pour cette évaluation et cet élève
-            allData = allData.filter(d => !(d.nom === data.nom && d.evaluation === data.evaluation));
+            // Sauvegarder dans Google Sheets
+            const success = await writeToSheet(data);
             
-            // Ajouter les nouvelles données
-            allData.push(data);
-            localStorage.setItem('studentData', JSON.stringify(allData));
-            
-            // Réinitialiser le formulaire
-            resetForm();
-            
-            messageDiv.innerHTML = '<div class="message success">Tes données ont bien été enregistrées</div>';
+            if (success) {
+                // Réinitialiser le formulaire
+                resetForm();
+                messageDiv.innerHTML = '<div class="message success">Tes données ont bien été enregistrées</div>';
+            } else {
+                messageDiv.innerHTML = '<div class="message error">Tes données n\'ont pas été bien enregistrées</div>';
+            }
         }
 
         // Réinitialiser le formulaire
@@ -770,7 +913,7 @@
         }
 
         // Afficher les graphiques élève
-        function showStudentGraphsData() {
+        async function showStudentGraphsData() {
             const password = document.getElementById('graphs-password').value;
             const messageDiv = document.getElementById('graphs-login-message');
             
@@ -778,6 +921,11 @@
             
             if (student) {
                 currentStudent = student;
+                messageDiv.innerHTML = '<div class="message">Chargement de vos graphiques...</div>';
+                
+                // Charger les données depuis Google Sheets
+                await loadStudentDataFromSheet();
+                
                 document.getElementById('student-charts').classList.remove('hidden');
                 document.getElementById('student-charts-title').textContent = `Graphiques de ${student.nom}`;
                 generateStudentCharts(student);
@@ -789,14 +937,19 @@
 
         // Générer les graphiques pour un élève
         function generateStudentCharts(student) {
-            const data = JSON.parse(localStorage.getItem('studentData') || '[]');
-            const studentData = data.filter(d => d.nom === student.nom);
+            // Utiliser les données chargées depuis Google Sheets
+            const studentDataFiltered = studentData.filter(d => d.nom === student.nom);
             
             // Graphiques par évaluation
             const evaluationChartsDiv = document.getElementById('evaluation-charts');
             evaluationChartsDiv.innerHTML = '';
             
-            studentData.forEach(evalData => {
+            if (studentDataFiltered.length === 0) {
+                evaluationChartsDiv.innerHTML = '<p>Aucune donnée disponible pour cet élève.</p>';
+                return;
+            }
+            
+            studentDataFiltered.forEach(evalData => {
                 const evalDiv = document.createElement('div');
                 evalDiv.innerHTML = `
                     <h3>${evalData.evaluation}</h3>
@@ -828,8 +981,8 @@
             });
             
             // Graphiques de synthèse
-            if (studentData.length > 0) {
-                const qualiteTotals = studentData.reduce((acc, d) => {
+            if (studentDataFiltered.length > 0) {
+                const qualiteTotals = studentDataFiltered.reduce((acc, d) => {
                     acc.vsc += d.qualite.vsc;
                     acc.horsSujet += d.qualite.horsSujet;
                     acc.faux += d.qualite.faux;
@@ -837,7 +990,7 @@
                     return acc;
                 }, {vsc: 0, horsSujet: 0, faux: 0, incomplet: 0});
                 
-                const ensuiteTotals = studentData.reduce((acc, d) => {
+                const ensuiteTotals = studentDataFiltered.reduce((acc, d) => {
                     acc.analyse += d.ensuite.analyse;
                     acc.lecture += d.ensuite.lecture;
                     acc.redaction += d.ensuite.redaction;
@@ -949,7 +1102,7 @@
             });
         }
 
-        function createEvaluation() {
+        async function createEvaluation() {
             const name = document.getElementById('new-eval-name').value;
             const type = document.getElementById('eval-type').value;
             const questions = parseInt(document.getElementById('question-count').value);
@@ -960,29 +1113,38 @@
             }
             
             const evaluation = {
+                type: 'evaluation',
                 name: name,
                 type: type,
                 questions: questions,
                 date: new Date().toISOString()
             };
             
-            let evaluations = JSON.parse(localStorage.getItem('evaluations') || '[]');
-            evaluations.push(evaluation);
-            localStorage.setItem('evaluations', JSON.stringify(evaluations));
+            // Sauvegarder dans Google Sheets
+            const success = await writeToSheet(evaluation);
             
-            // Réinitialiser le formulaire
-            document.getElementById('new-eval-name').value = '';
-            document.getElementById('question-count').value = '15';
-            
-            alert('Évaluation créée avec succès !');
+            if (success) {
+                // Réinitialiser le formulaire
+                document.getElementById('new-eval-name').value = '';
+                document.getElementById('question-count').value = '15';
+                
+                // Recharger les évaluations
+                await loadEvaluationsFromSheet();
+                
+                alert('Évaluation créée avec succès !');
+            } else {
+                alert('Erreur lors de la création de l\'évaluation');
+            }
         }
 
-        function showClassData(classFilter) {
-            const allData = JSON.parse(localStorage.getItem('studentData') || '[]');
-            let filteredData = allData;
+        async function showClassData(classFilter) {
+            // Charger les données depuis Google Sheets
+            await loadStudentDataFromSheet();
+            
+            let filteredData = studentData;
             
             if (classFilter !== 'all') {
-                filteredData = allData.filter(d => d.classe.toString() === classFilter);
+                filteredData = studentData.filter(d => d.classe.toString() === classFilter);
             }
             
             // Mettre à jour les boutons actifs
@@ -1046,11 +1208,13 @@
             );
         }
 
-        function showStudentDetails(student) {
-            const data = JSON.parse(localStorage.getItem('studentData') || '[]');
-            const studentData = data.filter(d => d.nom === student.nom);
+        async function showStudentDetails(student) {
+            // Charger les données depuis Google Sheets
+            await loadStudentDataFromSheet();
             
-            if (studentData.length === 0) {
+            const studentDataFiltered = studentData.filter(d => d.nom === student.nom);
+            
+            if (studentDataFiltered.length === 0) {
                 alert(`Aucune donnée disponible pour ${student.nom}`);
                 return;
             }
@@ -1074,7 +1238,7 @@
                     <h1>Détails pour ${student.nom} - Classe ${student.classe}</h1>
             `;
             
-            studentData.forEach(evalData => {
+            studentDataFiltered.forEach(evalData => {
                 html += `
                     <div class="evaluation">
                         <h3>${evalData.evaluation}</h3>
